@@ -98,8 +98,8 @@ void IntersectGroundPlane(Ray ray, inout RayHit bestHit)
         bestHit.distance = t;
         bestHit.position = ray.origin + t * ray.direction;
         bestHit.normal = float3(0.0f, 1.0f, 0.0f);
-        bestHit.albedo = 0.8f;
-        bestHit.specular = 0.03f;
+        bestHit.albedo = 0.0f;
+        bestHit.specular = 0.3f;
     }
 }
 
@@ -124,6 +124,30 @@ void IntersectSphere(Ray ray, inout RayHit bestHit, uint sphereIndex)
     }
 }
 
+// // Create individual sphere rather than read from spheres buffer
+// void IntersectSphere(Ray ray, inout RayHit bestHit, float4 sphere)
+// {
+//     // Calculate distance along the ray where the sphere is intersected
+//     float3 d = ray.origin - sphere.xyz;
+//     float p1 = -dot(ray.direction, d);
+//     float p2sqr = p1 * p1 - dot(d, d) + sphere.w * sphere.w;
+//     if (p2sqr < 0)
+//         return;
+//     float p2 = sqrt(p2sqr);
+//     float t = p1 - p2 > 0 ? p1 - p2 : p1 + p2;
+//     if (t > 0 && t < bestHit.distance)
+//     {
+//         bestHit.distance = t;
+//         bestHit.position = ray.origin + t * ray.direction;
+//         bestHit.normal = normalize(bestHit.position - sphere.xyz);
+// 
+//         // Hard-coded values for individual spheres
+//         bestHit.albedo = 0.0f;
+//         bestHit.specular = 0.6f;
+//     }
+// }
+
+
 
 //-------------------------------------
 //- TRACE
@@ -135,12 +159,20 @@ RayHit Trace(Ray ray)
     // Trace ground plane
     IntersectGroundPlane(ray, bestHit);
 
+    // Trace single sphere
+    // for (uint i = 0; i < 100; i+=1){
+    //     for (uint j = 0; j < 100; j +=1) {
+    //     		if ((i % 9 == 0) || (j % 9 ==0)) IntersectSphere(ray, bestHit, float4(3 * j, 1.0f, 3 * i, 1.0f));
+    //     }
+    // }
+
     // Trace spheres
     // uint numSpheres, stride;
     // _Spheres.GetDimensions(numSpheres, stride);
     uint numSpheres = _NumSpheres;
     for (uint i = 0; i < numSpheres; i++)
         IntersectSphere(ray, bestHit, i);
+
     return bestHit;
 }
 
@@ -181,6 +213,22 @@ float3 Shade(inout Ray ray, RayHit hit)
     }
 }
 
+// float3 Shade(inout Ray ray, RayHit hit)
+// {
+//     if (hit.distance < 1.#INF)
+//     {
+//         // Return the normal
+//         return hit.normal * 0.5f + 0.5f;
+//     }
+//     else
+//     {
+//         // Sample the skybox and write it
+//         float theta = acos(ray.direction.y) / -PI;
+//         float phi = atan2(ray.direction.x, -ray.direction.z) / -PI * 0.5f;
+//         return _SkyboxTexture.SampleLevel(sampler_SkyboxTexture, float2(phi, theta), 0).xyz;
+//     }
+// }
+
 
 //-------------------------------------
 //- KERNEL
@@ -210,4 +258,5 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     Result[id.xy] = float4(result, 1);
+    // Result[id.xy] = float4(ray.direction * 0.5f + 0.5f, 1.0f);
 }

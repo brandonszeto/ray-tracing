@@ -158,7 +158,7 @@ public class RayTracingMaster : MonoBehaviour
         int threadGroupsY = Mathf.CeilToInt(Screen.height / 8.0f);
         RayTracingShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
 
-        // Blit the result texture to the screen
+        //Blit the result texture to the screen
         if (_addMaterial == null)
             _addMaterial = new Material(Shader.Find("Hidden/AddShader"));
         _addMaterial.SetFloat("_Sample", _currentSample);
